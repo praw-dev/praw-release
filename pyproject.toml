@@ -1,0 +1,17 @@
+[project]
+name = "praw-release"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Bryce Boe", email = "bbzbryce@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+praw-release = "praw_release:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
