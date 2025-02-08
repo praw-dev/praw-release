@@ -45,19 +45,26 @@ def test_update_changes(mock_datetime: Mock) -> None:
 
     changes_file = StringIO(f"{UNRELEASED_CHANGES}ABC")
     assert update_changes(changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0"))
-    assert changes_file.getvalue() == "Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n1.0 (2025/01/01)\n----------------\n\nABC"
+    assert (
+        changes_file.getvalue()
+        == "Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n1.0 (2025/01/01)\n----------------\n\nABC"
+    )
     mock_datetime.now.assert_called_once()
 
 
 def test_update_changes__unexpected_changes(capsys: pytest.CaptureFixture) -> None:
     changes_file = StringIO("invalid changes files")
-    assert not update_changes(changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0"))
+    assert not update_changes(
+        changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0")
+    )
     assert changes_file.getvalue() == "invalid changes files"
     assert capsys.readouterr().err == "Unexpected CHANGES header\n"
 
 
 def test_update_changes_with_unreleased() -> None:
-    changes_file = StringIO("Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\nABC")
+    changes_file = StringIO(
+        "Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\nABC"
+    )
     assert update_changes_with_unreleased(changes_file=changes_file, package_name="mypackage")
     assert changes_file.getvalue() == f"{UNRELEASED_CHANGES}ABC"
 

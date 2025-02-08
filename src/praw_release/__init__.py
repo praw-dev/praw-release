@@ -33,7 +33,11 @@ def command_bump(*, changes_file: TextIO, package_name: str, version: str, versi
         sys.stderr.write(f"Failed to update version in {version_file.name}\n")
         return False
 
-    success = update_changes_with_unreleased(changes_file=changes_file, package_name=package_name) if unreleased else update_changes(changes_file=changes_file, package_name=package_name, version=normalized_version)
+    success = (
+        update_changes_with_unreleased(changes_file=changes_file, package_name=package_name)
+        if unreleased
+        else update_changes(changes_file=changes_file, package_name=package_name, version=normalized_version)
+    )
     if success:
         sys.stdout.write(f"{normalized_version}\n")
     return success

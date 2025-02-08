@@ -43,7 +43,10 @@ def test_extract_version_changes__single_section() -> None:
 
 
 def test_extract_version_changes__version_with_earlier_prefix_match() -> None:
-    assert extract_version_changes(source=EXAMPLE_DOCUMENT, version="5.0") == "5.0 (other info)\n----------------\na\nb\nc\n"
+    assert (
+        extract_version_changes(source=EXAMPLE_DOCUMENT, version="5.0")
+        == "5.0 (other info)\n----------------\na\nb\nc\n"
+    )
 
 
 def test_extract_version_changes__version_not_found() -> None:

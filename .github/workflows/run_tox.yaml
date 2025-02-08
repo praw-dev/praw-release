@@ -1,0 +1,29 @@
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: test with ${{ matrix.env }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - "3.13"
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python ${{ matrix.env }} tox --with tox-uv
+      - name: Run test suite
+        run: uv run tox
+name: run tox
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
