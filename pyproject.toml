@@ -12,11 +12,11 @@ lint = [
 ]
 test = [
     "coverage>=7.6.10",
-    "pytest>=8.3.4",
+    "pytest>=9.0.3",
 ]
 type = [
     "pyright>=1.1.393",
-    "pytest>=8.3.4",
+    "pytest>=9.0.3",
 ]
 
 
