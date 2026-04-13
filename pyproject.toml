@@ -27,7 +27,7 @@ authors = [
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     "docutils>=0.21.2",
-    "packaging>=24.2",
+    "packaging>=26.0",
 ]
 description = "Tool to help facilitate prawcore and PRAW releases."
 name = "praw-release"
