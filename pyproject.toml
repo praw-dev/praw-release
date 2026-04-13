@@ -5,7 +5,7 @@ requires = ["hatchling"]
 
 [dependency-groups]
 dev = [
-    "tox-uv>=1.22.1"
+    "tox-uv>=1.35.1"
 ]
 lint = [
     "ruff>=0.9.5",
