@@ -5,18 +5,18 @@ requires = ["hatchling"]
 
 [dependency-groups]
 dev = [
-    "tox-uv>=1.22.1"
+    "tox-uv>=1.35.1"
 ]
 lint = [
     "ruff>=0.9.5",
 ]
 test = [
-    "coverage>=7.6.10",
-    "pytest>=8.3.4",
+    "coverage>=7.13.5",
+    "pytest>=9.0.3",
 ]
 type = [
-    "pyright>=1.1.393",
-    "pytest>=8.3.4",
+    "pyright>=1.1.408",
+    "pytest>=9.0.3",
 ]
 
 
@@ -27,7 +27,7 @@ authors = [
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     "docutils>=0.21.2",
-    "packaging>=24.2",
+    "packaging>=26.0",
 ]
 description = "Tool to help facilitate prawcore and PRAW releases."
 name = "praw-release"
