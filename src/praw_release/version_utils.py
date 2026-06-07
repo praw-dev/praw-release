@@ -9,9 +9,11 @@ from typing import TextIO
 
 import packaging.version
 
+CATEGORY_RE = re.compile(r"\*\*(\w+)\*\*\n\n")
 CHANGELOG_HEADER = (
     "############\n Change Log\n############\n\n{} follows `semantic versioning <https://semver.org/>`_.\n\n"
 )
+SECTION_HEADER_RE = re.compile(r"\*+\n (\S+) \(\d{4}/\d{2}/\d{2}\)\n\*+\n\n")
 UNRELEASED_HEADER = "************\n Unreleased\n************\n\n"
 VERSION_RE = re.compile(r'__version__ = "([^"]+)"')
 
@@ -40,6 +42,36 @@ def calculate_development_version(*, version_file: TextIO) -> str | None:
     return development_version
 
 
+def _merge_prerelease_sections(*, body: str, version: packaging.version.Version) -> str:
+    """Fold leading prerelease sections of ``version`` into the unreleased changes.
+
+    ``body`` is everything following the Unreleased header. Entries from each
+    prerelease section are merged category-wise, oldest section first.
+    """
+    match = SECTION_HEADER_RE.search(body)
+    sections = [body[: match.start() if match else len(body)]]  # newest first
+    while match:
+        section_version = valid_version(match.group(1))
+        assert section_version is not None, f"invalid changelog version {match.group(1)}"
+        if not (section_version.is_prerelease and section_version.release == version.release):
+            break
+        content_start = match.end()
+        match = SECTION_HEADER_RE.search(body, content_start)
+        sections.append(body[content_start : match.start() if match else len(body)])
+    if len(sections) == 1:
+        return body
+
+    remainder = body[match.start() :] if match else ""
+    categories: dict[str, list[str]] = {}
+    for content in reversed(sections):  # oldest first
+        parts = CATEGORY_RE.split(content)
+        assert not parts[0].strip(), f"unexpected text before first category: {parts[0]!r}"
+        for name, entries in zip(parts[1::2], parts[2::2], strict=True):
+            categories.setdefault(name, []).append(entries.strip("\n"))
+    merged = "\n\n".join(f"**{name}**\n\n" + "\n".join(entries) for name, entries in sorted(categories.items()))
+    return f"{merged}\n\n{remainder}"
+
+
 def update_changes(*, changes_file: TextIO, package_name: str, version: packaging.version.Version) -> bool:
     """Update unreleased changelog entry to be for ``version``."""
     changelog_header = CHANGELOG_HEADER.format(package_name)
@@ -56,7 +88,12 @@ def update_changes(*, changes_file: TextIO, package_name: str, version: packagin
     adornment = "*" * (len(title) + 2)
     version_header = f"{adornment}\n {title}\n{adornment}\n\n"
 
-    changes_file.write(f"{changelog_header}{version_header}{content[len(expected_header) :]}")
+    body = content[len(expected_header) :]
+    if not version.is_prerelease:
+        body = _merge_prerelease_sections(body=body, version=version)
+
+    changes_file.write(f"{changelog_header}{version_header}{body}")
+    changes_file.truncate()
     return True
 
 
