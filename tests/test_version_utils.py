@@ -21,6 +21,12 @@ if TYPE_CHECKING:
 
 UNRELEASED_CHANGES = "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n************\n Unreleased\n************\n\n"
 
+PREVIOUS_RELEASE = "******************\n 0.9 (2024/12/01)\n******************\n\n**Added**\n\n- Old feature.\n"
+RC1_SECTION = "*********************\n 1.0rc1 (2024/12/31)\n*********************\n\n**Added**\n\n- New feature.\n\n**Changed**\n\n- First change.\n\n"
+RC2_SECTION = (
+    "*********************\n 1.0rc2 (2025/01/01)\n*********************\n\n**Changed**\n\n- Second change.\n\n"
+)
+
 
 def test_calculate_development_version() -> None:
     assert calculate_development_version(version_file=StringIO('__version__ = "invalid"')) is None
@@ -56,6 +62,69 @@ def test_update_changes(mock_datetime: Mock) -> None:
         == "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n******************\n 1.0 (2025/01/01)\n******************\n\nABC"
     )
     mock_datetime.now.assert_called_once()
+
+
+@patch("praw_release.version_utils.datetime")
+def test_update_changes__final_merges_prerelease_sections(mock_datetime: Mock) -> None:
+    mock_datetime.now.return_value = datetime(2025, 1, 2, tzinfo=UTC)
+
+    changes_file = StringIO(
+        f"{UNRELEASED_CHANGES}**Fixed**\n\n- Unreleased fix.\n\n{RC2_SECTION}{RC1_SECTION}{PREVIOUS_RELEASE}"
+    )
+    assert update_changes(changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0"))
+    assert (
+        changes_file.getvalue()
+        == "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n"
+        "******************\n 1.0 (2025/01/02)\n******************\n\n"
+        "**Added**\n\n- New feature.\n\n"
+        "**Changed**\n\n- First change.\n- Second change.\n\n"
+        "**Fixed**\n\n- Unreleased fix.\n\n"
+        f"{PREVIOUS_RELEASE}"
+    )
+
+
+@patch("praw_release.version_utils.datetime")
+def test_update_changes__final_merges_prerelease_sections_empty_unreleased(mock_datetime: Mock) -> None:
+    mock_datetime.now.return_value = datetime(2025, 1, 2, tzinfo=UTC)
+
+    changes_file = StringIO(f"{UNRELEASED_CHANGES}{RC1_SECTION}")
+    assert update_changes(changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0"))
+    assert (
+        changes_file.getvalue()
+        == "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n"
+        "******************\n 1.0 (2025/01/02)\n******************\n\n"
+        "**Added**\n\n- New feature.\n\n"
+        "**Changed**\n\n- First change.\n\n"
+    )
+
+
+@patch("praw_release.version_utils.datetime")
+def test_update_changes__final_skips_other_release_prereleases(mock_datetime: Mock) -> None:
+    mock_datetime.now.return_value = datetime(2025, 1, 2, tzinfo=UTC)
+
+    changes_file = StringIO(f"{UNRELEASED_CHANGES}**Fixed**\n\n- A fix.\n\n{RC1_SECTION}")
+    assert update_changes(changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.1"))
+    assert (
+        changes_file.getvalue()
+        == "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n"
+        "******************\n 1.1 (2025/01/02)\n******************\n\n"
+        f"**Fixed**\n\n- A fix.\n\n{RC1_SECTION}"
+    )
+
+
+@patch("praw_release.version_utils.datetime")
+def test_update_changes__prerelease_keeps_prerelease_sections(mock_datetime: Mock) -> None:
+    mock_datetime.now.return_value = datetime(2025, 1, 1, tzinfo=UTC)
+
+    changes_file = StringIO(f"{UNRELEASED_CHANGES}**Changed**\n\n- Second change.\n\n{RC1_SECTION}")
+    assert update_changes(
+        changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0rc2")
+    )
+    assert (
+        changes_file.getvalue()
+        == "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n"
+        f"{RC2_SECTION}{RC1_SECTION}"
+    )
 
 
 def test_update_changes__unexpected_changes(capsys: pytest.CaptureFixture) -> None:
