@@ -14,14 +14,15 @@ from praw_release.version_utils import (
 )
 from tests.utils import NamedStringIO
 
-UNRELEASED_CHANGES = "Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\nUnreleased\n----------\n\n"
+UNRELEASED_CHANGES = "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n************\n Unreleased\n************\n\n"
 
 
 def test_calculate_development_version() -> None:
     assert calculate_development_version(version_file=StringIO('__version__ = "invalid"')) is None
     assert calculate_development_version(version_file=StringIO('__version__ = "1.0dev0"')) == "1.0.dev1"
     assert calculate_development_version(version_file=StringIO('__version__ = "1.0a0.dev0"')) == "1.0a0.dev1"
-    assert calculate_development_version(version_file=StringIO('__version__ = "1.0a0"')) == "1.0a0.dev0"
+    assert calculate_development_version(version_file=StringIO('__version__ = "1.0a0"')) == "1.0a1.dev0"
+    assert calculate_development_version(version_file=StringIO('__version__ = "1.0rc1"')) == "1.0rc2.dev0"
     assert calculate_development_version(version_file=StringIO('__version__ = "1.0"')) == "1.0.1.dev0"
 
 
@@ -47,7 +48,7 @@ def test_update_changes(mock_datetime: Mock) -> None:
     assert update_changes(changes_file=changes_file, package_name="mypackage", version=packaging.version.parse("1.0"))
     assert (
         changes_file.getvalue()
-        == "Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n1.0 (2025/01/01)\n----------------\n\nABC"
+        == "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n******************\n 1.0 (2025/01/01)\n******************\n\nABC"
     )
     mock_datetime.now.assert_called_once()
 
@@ -63,7 +64,7 @@ def test_update_changes__unexpected_changes(capsys: pytest.CaptureFixture) -> No
 
 def test_update_changes_with_unreleased() -> None:
     changes_file = StringIO(
-        "Change Log\n==========\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\nABC"
+        "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\nABC"
     )
     assert update_changes_with_unreleased(changes_file=changes_file, package_name="mypackage")
     assert changes_file.getvalue() == f"{UNRELEASED_CHANGES}ABC"

@@ -7,8 +7,10 @@ from typing import TextIO
 
 import packaging.version
 
-CHANGELOG_HEADER = "Change Log\n==========\n\n{} follows `semantic versioning <https://semver.org/>`_.\n\n"
-UNRELEASED_HEADER = "Unreleased\n----------\n\n"
+CHANGELOG_HEADER = (
+    "############\n Change Log\n############\n\n{} follows `semantic versioning <https://semver.org/>`_.\n\n"
+)
+UNRELEASED_HEADER = "************\n Unreleased\n************\n\n"
 VERSION_RE = re.compile(r'__version__ = "([^"]+)"')
 
 
@@ -25,7 +27,11 @@ def calculate_development_version(*, version_file: TextIO) -> str | None:
         assert isinstance(parsed_version.dev, int)
         development_version = f"{parsed_version.base_version}{pre}.dev{parsed_version.dev + 1}"
     elif parsed_version.is_prerelease:
-        development_version = f"{parsed_version}.dev0"
+        # Advance the prerelease number since a prerelease's dev version sorts before
+        # the prerelease itself, e.g., 1.0rc1.dev0 < 1.0rc1 < 1.0rc2.dev0.
+        assert parsed_version.pre is not None
+        letter, number = parsed_version.pre
+        development_version = f"{parsed_version.base_version}{letter}{number + 1}.dev0"
     else:
         development_version = f"{parsed_version.major}.{parsed_version.minor}.{parsed_version.micro + 1}.dev0"
 
@@ -44,8 +50,9 @@ def update_changes(*, changes_file: TextIO, package_name: str, version: packagin
         return False
 
     date_string = datetime.now(tz=UTC).date().strftime("%Y/%m/%d")
-    version_line = f"{version} ({date_string})\n"
-    version_header = f"{version_line}{'-' * len(version_line[:-1])}\n\n"
+    title = f"{version} ({date_string})"
+    adornment = "*" * (len(title) + 2)
+    version_header = f"{adornment}\n {title}\n{adornment}\n\n"
 
     changes_file.write(f"{changelog_header}{version_header}{content[len(expected_header) :]}")
     return True
