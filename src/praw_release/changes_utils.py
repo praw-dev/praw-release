@@ -37,9 +37,10 @@ def _get_entry_slice(*, document: docutils.nodes.document, version: str) -> slic
 
 def _parse_rst(text: str, /) -> docutils.nodes.document:
     """Parse ``text`` as reStructuredText."""
-    settings = get_default_settings(Parser)
+    parser = Parser()
+    settings = get_default_settings(parser)
     settings.report_level = 4
-    Parser().parse(text, document := new_document("<rst-doc>", settings=settings))
+    parser.parse(text, document := new_document("<rst-doc>", settings=settings))
     return document
 
 
