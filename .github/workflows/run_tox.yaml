@@ -2,6 +2,25 @@ concurrency:
   group: check-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  checks:
+    name: ${{ matrix.env }} check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - lint
+          - type
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Run check
+        env:
+          TOX_ENV: ${{ matrix.env }}
+        run: uv run --frozen tox run -e "$TOX_ENV"
   test:
     name: test with ${{ matrix.env }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -9,21 +28,25 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - "3.13"
+          - "3.14"
         os:
           - ubuntu-latest
           - macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
-      - name: Install tox
-        run: uv tool install --python-preference only-managed --python ${{ matrix.env }} tox --with tox-uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
       - name: Run test suite
-        run: uv run tox
+        env:
+          PYTHON_VERSION: ${{ matrix.env }}
+        run: uv run --frozen tox run -e "py${PYTHON_VERSION//./}"
 name: run tox
 on:
   workflow_dispatch:
   push:
     branches: ["main"]
   pull_request:
+permissions:
+  contents: read

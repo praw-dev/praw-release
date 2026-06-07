@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from io import StringIO
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import packaging.version
-import pytest
 
 from praw_release.version_utils import (
     calculate_development_version,
@@ -13,6 +15,9 @@ from praw_release.version_utils import (
     valid_version,
 )
 from tests.utils import NamedStringIO
+
+if TYPE_CHECKING:
+    import pytest
 
 UNRELEASED_CHANGES = "############\n Change Log\n############\n\nmypackage follows `semantic versioning <https://semver.org/>`_.\n\n************\n Unreleased\n************\n\n"
 

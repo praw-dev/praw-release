@@ -99,5 +99,5 @@ def test_main__no_command(capsys: pytest.CaptureFixture) -> None:
         main()
     assert (
         capsys.readouterr().err
-        == "usage: progname [-h] {bump,changes,extract-version} ...\nprogname: error: the following arguments are required: {bump,changes,extract-version}\n"
+        == "usage: praw-release [-h] {bump,changes,extract-version} ...\npraw-release: error: the following arguments are required: {bump,changes,extract-version}\n"
     )

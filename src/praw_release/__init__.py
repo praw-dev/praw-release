@@ -65,7 +65,7 @@ def command_extract_version() -> bool:
 
 def main() -> int:
     """Provide the entrypoint into the CLI."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="praw-release")
     subparsers = parser.add_subparsers(required=True)
 
     bump_parser = subparsers.add_parser("bump")
