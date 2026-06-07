@@ -26,7 +26,7 @@ def _get_entry_slice(*, document: docutils.nodes.document, version: str) -> slic
         if start_line is None:
             first_token = title.rawsource.split(None, 1)[0]
             if first_token == version:
-                start_line = title.line - 2
+                start_line = title.line  # content begins after the title underline
         elif start_line is not None:
             end_line = title.line - 3
             break
@@ -47,8 +47,13 @@ def _parse_rst(text: str, /) -> docutils.nodes.document:
 
 
 def extract_version_changes(*, source: str, version: str) -> str | None:
-    """Return the changes entry for the provided version."""
+    """Return the changes entry content for the provided version.
+
+    The section heading is excluded so the result can be used directly as release
+    notes.
+    """
     entry_slice = _get_entry_slice(document=_parse_rst(source), version=version)
     if entry_slice is None:
         return None
-    return "".join(source.splitlines(keepends=True)[entry_slice])
+    changes = "".join(source.splitlines(keepends=True)[entry_slice]).strip("\n")
+    return f"{changes}\n" if changes else ""

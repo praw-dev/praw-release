@@ -61,8 +61,8 @@ def test_command_bump__unreleased__invalid_version(capsys: pytest.CaptureFixture
 
 
 def test_command_changes(capsys: pytest.CaptureFixture) -> None:
-    assert command_changes(changes_file=NamedStringIO("A\n=\n1\n-\n", name="CHANGES.rst"), version="1")
-    assert capsys.readouterr().out == "1\n-\n"
+    assert command_changes(changes_file=NamedStringIO("A\n=\n1\n-\nx\n", name="CHANGES.rst"), version="1")
+    assert capsys.readouterr().out == "x\n"
 
 
 def test_command_changes__version_not_found(capsys: pytest.CaptureFixture) -> None:
