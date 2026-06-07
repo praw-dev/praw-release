@@ -1,5 +1,7 @@
 """Functions pertaining to package version number."""
 
+from __future__ import annotations
+
 import re
 import sys
 from datetime import UTC, datetime

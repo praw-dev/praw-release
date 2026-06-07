@@ -1,5 +1,7 @@
 """Functions pertaining to CHANGES.rst files."""
 
+from __future__ import annotations
+
 import docutils.nodes
 from docutils.frontend import get_default_settings
 from docutils.parsers.rst import Parser
