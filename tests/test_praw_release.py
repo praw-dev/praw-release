@@ -79,6 +79,15 @@ def test_main__changes__fails(capsys: pytest.CaptureFixture) -> None:
     assert capsys.readouterr().err == f"No {changes_file.name} entry for 1.0\n"
 
 
+def test_main__changes__unopenable_changes_file(capsys: pytest.CaptureFixture) -> None:
+    with (
+        patch.object(sys, "argv", ["progname", "changes", "--changes_file", "/does/not/exist", "1.0"]),
+        pytest.raises(SystemExit),
+    ):
+        main()
+    assert "can't open '/does/not/exist'" in capsys.readouterr().err
+
+
 def test_main__extract_version(capsys: pytest.CaptureFixture) -> None:
     with (
         patch.object(sys, "argv", ["progname", "extract-version"]),

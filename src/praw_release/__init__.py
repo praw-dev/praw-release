@@ -1,8 +1,15 @@
 """Tool to help facilitate prawcore and PRAW releases."""
 
+from __future__ import annotations
+
 import argparse
+import contextlib
 import sys
-from typing import TextIO
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import TextIO
 
 from praw_release.changes_utils import extract_version_changes
 from praw_release.version_utils import (
@@ -69,23 +76,31 @@ def main() -> int:
     subparsers = parser.add_subparsers(required=True)
 
     bump_parser = subparsers.add_parser("bump")
-    bump_parser.add_argument("--changes_file", default=CHANGES_FILENAME, type=argparse.FileType("r+"))
+    bump_parser.add_argument("--changes_file", default=CHANGES_FILENAME)
     bump_parser.add_argument("package_name")
     bump_parser.add_argument("version")
-    bump_parser.add_argument("version_file", type=argparse.FileType("r+"))
-    bump_parser.set_defaults(command=command_bump)
+    bump_parser.add_argument("version_file")
+    bump_parser.set_defaults(command=command_bump, file_modes={"changes_file": "r+", "version_file": "r+"})
 
     changes_parser = subparsers.add_parser("changes")
-    changes_parser.add_argument("--changes_file", default=CHANGES_FILENAME, type=argparse.FileType("r"))
+    changes_parser.add_argument("--changes_file", default=CHANGES_FILENAME)
     changes_parser.add_argument("version")
-    changes_parser.set_defaults(command=command_changes)
+    changes_parser.set_defaults(command=command_changes, file_modes={"changes_file": "r"})
 
     extract_parser = subparsers.add_parser("extract-version")
-    extract_parser.set_defaults(command=command_extract_version)
+    extract_parser.set_defaults(command=command_extract_version, file_modes={})
 
-    arguments = parser.parse_args()
+    command_arguments = vars(parser.parse_args())
+    command = command_arguments.pop("command")
+    file_modes = command_arguments.pop("file_modes")
 
-    command = arguments.command
-    command_arguments = vars(arguments)
-    del command_arguments["command"]
-    return 0 if command(**command_arguments) else 1
+    # Open file arguments after parsing; argparse.FileType (deprecated in Python 3.14)
+    # opened them at parse time, leaking handles and truncating files on later errors.
+    with contextlib.ExitStack() as stack:
+        for name, mode in file_modes.items():
+            path = command_arguments[name]
+            try:
+                command_arguments[name] = stack.enter_context(Path(path).open(mode))
+            except OSError as exception:
+                parser.error(f"can't open {path!r}: {exception}")
+        return 0 if command(**command_arguments) else 1
